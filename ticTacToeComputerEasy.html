@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe - Hard Mode</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0f3e, #1a1a40);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 2px solid #4fc3f7;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+    .cell:hover {
+      transform: scale(1.1);
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .cell.X {
+      color: #ff6f61;
+    }
+    .cell.O {
+      color: #81c784;
+    }
+    .controls {
+      display: flex;
+      gap: 15px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background: #4fc3f7;
+      color: #111;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #29b6f6;
+    }
+    .message {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+    }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: transparent;
+      border: 2px solid #4fc3f7;
+      color: #4fc3f7;
+    }
+  </style>
+</head>
+<body>
+  <button class="back-button" onclick="goBack()">⬅ Back</button>
+  <h1>Hard Mode</h1>
+  <div class="message" id="message"></div>
+  <div class="board" id="board"></div>
+  <div class="controls">
+    <button onclick="restartGame()">Restart Game</button>
+  </div>
+
+  <script>
+    let board = Array(9).fill("");
+    let currentPlayer = "X";
+    let gameOver = false;
+
+    const winCombos = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+
+    const boardContainer = document.getElementById("board");
+    const message = document.getElementById("message");
+
+    function renderBoard() {
+      boardContainer.innerHTML = "";
+      board.forEach((cell, index) => {
+        const cellDiv = document.createElement("div");
+        cellDiv.classList.add("cell");
+        if (cell) cellDiv.classList.add(cell);
+        cellDiv.textContent = cell;
+        cellDiv.addEventListener("click", () => handleMove(index));
+        boardContainer.appendChild(cellDiv);
+      });
+    }
+
+    function handleMove(index) {
+      if (board[index] || gameOver) return;
+      board[index] = currentPlayer;
+      checkWinner();
+      if (!gameOver) {
+        currentPlayer = "O";
+        setTimeout(() => {
+          aiMove();
+          renderBoard();
+          checkWinner();
+          currentPlayer = "X";
+        }, 500);
+      }
+      renderBoard();
+    }
+
+    function aiMove() {
+      let move;
+      const emptyIndices = board.map((val, i) => val === "" ? i : null).filter(i => i !== null);
+      const shouldPlaySmart = Math.random() < 0.2; // 20% smart moves
+
+      if (shouldPlaySmart) {
+        let bestScore = -Infinity;
+        for (let i of emptyIndices) {
+          board[i] = "O";
+          let score = minimax(board, 0, false);
+          board[i] = "";
+          if (score > bestScore) {
+            bestScore = score;
+            move = i;
+          }
+        }
+      } else {
+        move = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      }
+
+      if (move !== undefined) board[move] = "O";
+    }
+
+    function minimax(board, depth, isMaximizing) {
+      let result = checkWinnerAlgo();
+      if (result !== null) {
+        const scores = { X: -1, O: 1, tie: 0 };
+        return scores[result];
+      }
+      if (isMaximizing) {
+        let best = -Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (!board[i]) {
+            board[i] = "O";
+            let score = minimax(board, depth + 1, false);
+            board[i] = "";
+            best = Math.max(score, best);
+          }
+        }
+        return best;
+      } else {
+        let best = Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (!board[i]) {
+            board[i] = "X";
+            let score = minimax(board, depth + 1, true);
+            board[i] = "";
+            best = Math.min(score, best);
+          }
+        }
+        return best;
+      }
+    }
+
+    function checkWinnerAlgo() {
+      for (let combo of winCombos) {
+        const [a, b, c] = combo;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return board[a];
+        }
+      }
+      if (!board.includes("")) return "tie";
+      return null;
+    }
+
+    function checkWinner() {
+      const winner = checkWinnerAlgo();
+      if (winner && winner !== "tie") {
+        message.textContent = `${winner} wins!`;
+        gameOver = true;
+      } else if (winner === "tie") {
+        message.textContent = "It's a tie!";
+        gameOver = true;
+      }
+    }
+
+    function restartGame() {
+      board = Array(9).fill("");
+      currentPlayer = "X";
+      gameOver = false;
+      message.textContent = "";
+      renderBoard();
+    }
+
+    function goBack() {
+      window.location.href = "ludu.html";
+    }
+
+    renderBoard();
+  </script>
+</body>
+</html>

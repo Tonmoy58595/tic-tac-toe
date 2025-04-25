@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Futuristic Tic-Tac-Toe</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #0f0f3e, #1a1a40);
+      background-size: 400% 400%;
+      color: white;
+      overflow: hidden;
+      animation: backgroundShift 10s ease-in-out infinite alternate;
+    }
+
+    @keyframes backgroundShift {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(79, 195, 247, 0.4);
+      animation: fadeIn 1s ease-in-out, pulseGlow 2s infinite alternate;
+      transition: transform 0.5s ease;
+    }
+
+    @keyframes pulseGlow {
+      0% {
+        box-shadow: 0 0 25px rgba(79, 195, 247, 0.4);
+      }
+      100% {
+        box-shadow: 0 0 45px rgba(79, 195, 247, 0.7);
+      }
+    }
+
+    .container:hover {
+      transform: scale(1.02);
+    }
+
+    .title {
+      font-size: 2.8rem;
+      margin-bottom: 30px;
+      color: #4fc3f7;
+      animation: slideIn 1s ease-out;
+      text-shadow: 0 0 15px rgba(79, 195, 247, 0.7);
+    }
+
+    .title:hover {
+      color: #81d4fa;
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 10px;
+      margin: 20px 0;
+      justify-content: center;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2.5rem;
+      cursor: pointer;
+      background: #222;
+      border-radius: 12px;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    .cell:hover {
+      background-color: rgba(79, 195, 247, 0.2);
+      transform: scale(1.1);
+    }
+
+    .cell.selected {
+      pointer-events: none;
+    }
+
+    .highlight {
+      background-color: #ffeb3b;
+      box-shadow: 0 0 20px rgba(255, 255, 0, 0.7);
+    }
+
+    .message {
+      font-size: 1.5rem;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #ff6347;
+      text-shadow: 1px 1px 5px rgba(0, 255, 255, 0.5);
+    }
+
+    .reset-btn {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin-top: 20px;
+      transition: background-color 0.3s ease;
+    }
+
+    .reset-btn:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    .back-btn {
+      background-color: #ff5722;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin-top: 20px;
+      transition: background-color 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background-color: #e64a19;
+      transform: scale(1.05);
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes slideIn {
+      0% { transform: translateY(-20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Futuristic Tic-Tac-Toe</div>
+    <div class="message" id="message">Player X's turn</div>
+    <div class="game-board" id="gameBoard">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+    <button class="reset-btn" id="resetBtn">Reset Game</button>
+    <button class="back-btn" id="backBtn">Back</button>
+  </div>
+
+  <script>
+    let currentPlayer = 'X';
+    let board = ['', '', '', '', '', '', '', '', ''];
+    let gameOver = false;
+    let winningCombination = [];
+
+    const gameBoard = document.getElementById('gameBoard');
+    const message = document.getElementById('message');
+    const resetBtn = document.getElementById('resetBtn');
+    const backBtn = document.getElementById('backBtn');
+
+    function handleCellClick(event) {
+      if (gameOver) return;
+      const cell = event.target;
+      const index = cell.dataset.index;
+
+      if (board[index] !== '') return;
+
+      board[index] = currentPlayer;
+      cell.textContent = currentPlayer;
+      cell.style.color = currentPlayer === 'X' ? '#FF6347' : '#FFD700'; // X and O colors
+      cell.classList.add('selected');
+
+      // Animate the cell click
+      cell.style.transform = 'scale(1.3)';
+      setTimeout(() => {
+        cell.style.transform = 'scale(1)';
+      }, 300);
+
+      // Check if there's a winner
+      if (checkWinner()) {
+        message.textContent = `${currentPlayer} wins! 🎉`;
+        highlightWinnerCells();
+        gameOver = true;
+        return;
+      }
+
+      // Check if the board is full (tie)
+      if (board.every(cell => cell !== '')) {
+        message.textContent = "It's a tie! 🤝";
+        gameOver = true;
+        return;
+      }
+
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      message.textContent = `Player ${currentPlayer}'s turn`;
+    }
+
+    function checkWinner() {
+      const winningCombinations = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+      ];
+
+      const winner = winningCombinations.find(combination => {
+        const [a, b, c] = combination;
+        return board[a] && board[a] === board[b] && board[a] === board[c];
+      });
+
+      if (winner) {
+        winningCombination = winner;
+        return true;
+      }
+
+      return false;
+    }
+
+    function highlightWinnerCells() {
+      winningCombination.forEach(index => {
+        const winningCell = document.querySelector(`[data-index="${index}"]`);
+        winningCell.classList.add('highlight');
+      });
+    }
+
+    function resetGame() {
+      board = ['', '', '', '', '', '', '', '', ''];
+      gameOver = false;
+      currentPlayer = 'X';
+      message.textContent = `Player ${currentPlayer}'s turn`;
+
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.textContent = '';
+        cell.classList.remove('highlight');
+        cell.classList.remove('selected');
+      });
+    }
+
+    function goBack() {
+      window.location.href = 'ludu.html';  // Replace with your main menu or previous page URL
+    }
+
+    gameBoard.addEventListener('click', handleCellClick);
+    resetBtn.addEventListener('click', resetGame);
+    backBtn.addEventListener('click', goBack);
+  </script>
+</body>
+</html>
